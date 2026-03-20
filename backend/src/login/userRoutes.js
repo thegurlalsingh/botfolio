@@ -1,9 +1,9 @@
 import express from 'express';
-import { login, saveProfile } from '../controllers/userController.js';
-import { verifyToken } from '../middlewares/authMiddleware.js';
-import { uploadResume } from "../controllers/resumeController.js"
+import { login, saveProfile } from './userController.js';
+import { verifyToken } from './authMiddleware.js';
+import { uploadResume } from "../resume/resumeController.js"
 // import { isHR } from '../middlewares/authMiddleware.js';
-import User from '../models/User.js';
+import User from './User.js';
 
 const router = express.Router();
 

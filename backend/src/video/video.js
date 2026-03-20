@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const videoAttemptSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   question: { type: String, required: true },
-  videoUrl: { type: String, required: true },
+  videoUrl: { type: String},
   audioUrl: { type: String },
   transcript: { type: String },
   score: { type: Number }, // 0-100

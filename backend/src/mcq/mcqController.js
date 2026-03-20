@@ -1,6 +1,6 @@
-import MCQAttempt from '../models/mcq.js';
-import User from '../models/User.js';
-import { generateMCQs } from '../services/generate_questions.js';
+import MCQAttempt from './mcq.js';
+import User from '../login/User.js'
+import { generateMCQs } from './generate_questions.js';
 
 export const startMCQ = async (req, res) => {
   const userId = req.user.id;
@@ -22,6 +22,8 @@ export const startMCQ = async (req, res) => {
       experienceYears: user.experience,
       appliedFor: user.appliedFor
     };
+
+    console.log("from controller - context:", context);
 
     const questions = await generateMCQs(context);
 
@@ -73,6 +75,8 @@ export const submitMCQ = async (req, res) => {
       total: attempt.questions.length,
       percentage: Math.round((score / attempt.questions.length) * 100)
     });
+
+    console.log("score for verification:", score);
 
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

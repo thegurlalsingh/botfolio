@@ -1,8 +1,8 @@
 import multer from 'multer';
 import { Storage } from '@google-cloud/storage';
-import { extractTextFromPDF } from '../services/extractText.js';
-import { parseResumeText } from '../services/parseResume.js';
-import User from '../models/User.js';
+import { extractTextFromPDF } from './extractText.js';
+import { parseResumeText } from './parseResume.js';
+import User from '../login/User.js';
 import fs from 'fs';
 import path from 'path';
 import 'dotenv/config';

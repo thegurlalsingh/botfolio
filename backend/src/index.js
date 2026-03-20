@@ -2,12 +2,14 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import userRoutes from './routes/userRoutes.js';
-import mcqRoutes from './routes/mcqRoutes.js';
-import videoRoutes from './routes/videoRoutes.js';
+import userRoutes from './login/userRoutes.js';
+import mcqRoutes from './mcq/mcqRoutes.js';
+import videoRoutes from './video/videoRoutes.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import codingRoutes from './routes/codingRoutes.js'
+import codingRoutes from './coding/codingRoutes.js'
+import resultsRoutes from './results/resultsRoutes.js';
+
 dotenv.config();
 
 const app = express();
@@ -46,6 +48,7 @@ app.use('/api/user', userRoutes, limiter);
 app.use('/api/mcq', mcqRoutes);
 app.use('/api/video', videoRoutes);
 app.use('/api/coding', codingRoutes);
+app.use('/api/results', resultsRoutes);
 
 
 

@@ -5,7 +5,7 @@ const mcqSchema = new mongoose.Schema({
   questions: [{
     question: String,
     options: [String],
-    correct: Number
+    correct: String
   }],
   answers: [Number],  // user's selected indices
   score: Number,

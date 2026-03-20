@@ -9,6 +9,15 @@ const experienceTimelineSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const degreeTimelineSchema = new mongoose.Schema(
+  {
+    college: { type: String, trim: true },
+    degree_name: { type: String, trim: true },
+    from_to: { type: String, trim: true }
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -35,6 +44,15 @@ const userSchema = new mongoose.Schema({
     default: "candidate"
   },
 
+  refreshToken: {
+    type: String,           // we'll store HASHED version
+    default: null,
+  },
+  refreshTokenExpires: {
+    type: Date,
+    default: null,
+  },
+  
   phone: {
     type: String,
     trim: true
@@ -65,10 +83,6 @@ const userSchema = new mongoose.Schema({
     trim: true
   },
 
-  appliedFor: {
-    type: String,            // CURRENT ROLE ONLY
-    trim: true
-  },
 
   experience: {
     type: String,            // e.g. "2 years"
@@ -80,18 +94,8 @@ const userSchema = new mongoose.Schema({
     default: []
   },
 
-  companies: {
-    type: [String],
-    default: []
-  },
-
   degree: {
-    type: [String],          // e.g. ["B.Tech CSE", "M.Tech AI"]
-    default: []
-  },
-
-  college: {
-    type: [String],          // e.g. ["Bennett University"]
+    type: [degreeTimelineSchema],
     default: []
   },
 

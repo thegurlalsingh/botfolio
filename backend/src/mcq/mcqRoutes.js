@@ -1,6 +1,6 @@
 import express from 'express';
-import { startMCQ, submitMCQ } from '../controllers/mcqController.js';
-import { verifyToken } from '../middlewares/authMiddleware.js';
+import { startMCQ, submitMCQ } from './mcqController.js';
+import { verifyToken } from '../login/authMiddleware.js';
 
 const router = express.Router();
 

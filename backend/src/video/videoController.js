@@ -3,11 +3,12 @@ import multer from 'multer';
 import { Storage } from '@google-cloud/storage';
 import fs from 'fs';
 import path from 'path';
-import { extractAudio } from '../services/extractAudio.js';
-import { transcribeAudio } from '../services/transcribe.js';
-import VideoAttempt from '../models/video.js';
-import { generateBehavioralQuestion } from '../services/generate_questions.js'
-import { assessAnswer } from '../services/assessAnswer.js'; 
+import { extractAudio } from './extractAudio.js';
+import { transcribeAudio } from './transcribe.js';
+import VideoAttempt from './video.js';
+import { generateBehavioralQuestion } from './generate_questions.js'
+import { assessAnswer } from './assessAnswer.js'; 
+import User from '../login/User.js';
 
 const storage = new Storage({
   projectId: process.env.GCP_PROJECT_ID,

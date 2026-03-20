@@ -2,16 +2,23 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import User from '../src/models/User.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+dotenv.config({
+  path: path.resolve(__dirname, '../.env')
+});
+
+console.log("MONGO_URI =", process.env.MONGO_URI);
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
     console.log('Connected to MongoDB');
 
     const candidateAccounts = [
-      { email: 'gureee1@gmail.com', password: 'gureee123', name: 'Candidate One', role: 'candidate' },
-      { email: 'gureee2@gmail.com', password: 'gureee456', name: 'Candidate Two', role: 'candidate' }
+      { email: 'test@gmail.com', password: 'test', name: 'test', role: 'candidate' }
     ];
 
     for (const acc of candidateAccounts) {
@@ -24,7 +31,7 @@ mongoose.connect(process.env.MONGO_URI)
           password: hashed,
           name: acc.name,
           role: acc.role,
-          currentStep: 'mcq'  
+          currentStep: 'info'  
         });
         console.log(`Added Candidate: ${acc.email}`);
       } else {

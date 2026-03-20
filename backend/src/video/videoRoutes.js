@@ -1,6 +1,6 @@
 import express from 'express';
-import { uploadVideo, transcribeVideo, startVideoRound, submitVideoAnswer } from '../controllers/videoController.js';
-import { verifyToken } from '../middlewares/authMiddleware.js';
+import { uploadVideo, transcribeVideo, startVideoRound, submitVideoAnswer } from './videoController.js';
+import { verifyToken } from '../login/authMiddleware.js';
 
 const router = express.Router();
 
