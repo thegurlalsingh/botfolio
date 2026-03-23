@@ -1,25 +1,24 @@
 FROM python:3.11-slim
 
-# Install Node.js 20
+# Install system dependencies + Node.js
 RUN apt-get update && \
-    apt-get install -y curl && \
+    apt-get install -y curl make g++ python3 && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install ONLY pdfplumber (required for PDF text extraction)
+# Install python dependency
 RUN pip install pdfplumber --break-system-packages
 
 WORKDIR /app
 
-# Copy and install Node dependencies
+# Install Node dependencies
 COPY package*.json ./
 RUN npm ci --only=production
 
 # Copy source code
 COPY . .
 
-# Create directory for GCP key
 RUN mkdir -p /app/keys
 
 EXPOSE 5050
