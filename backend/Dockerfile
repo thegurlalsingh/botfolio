@@ -14,7 +14,7 @@ WORKDIR /app
 
 # Install Node dependencies
 COPY package*.json ./
-RUN RUN npm install --omit=dev
+RUN npm install --omit=dev
 
 # Copy source code
 COPY . .
