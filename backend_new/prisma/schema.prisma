@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  candidate
+  hr
+}
+
+enum Step {
+  info
+  mcq
+  video
+  coding
+  completed
+}
+
+model ExperienceTimeline {
+  id String @id @default(uuid())
+  title String?
+  company String?
+  duration String?
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EducationTimeLine {
+  id String @id @default(uuid())
+  college String?
+  degree_name String?
+  from_to String?
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id String @id @default(uuid())
+  name String 
+  email String @unique
+  password String @unique
+  role Role @default(candidate)
+  refreshToken String?
+  refreshTokenExpires DateTime?
+  phone String?
+  location String?
+  resumeUrl String?
+  currentStep Step? @default(info)
+  skills String[] @default([])
+  designation String?
+  experienceYear String?
+  experienceTimeline ExperienceTimeline[]
+  educationTimeLine EducationTimeLine[]
+  createdAt DateTime @default(now())
+  mcqAttempts McqAttempt[]
+  mcqScore Float?
+  videoAttempts VideoAttempt[]
+  videoScore Float?
+  codingAttempts CodingAttempt[]
+  codingScore Float?
+}
+
+model McqAttempt {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  questions Json
+  answers String[] @default([])
+  score Float @default(0)
+  completed Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+
+model VideoAttempt {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  question String
+  videoUrl String?
+  audioUrl String?
+  transcript String? 
+  score Float?
+  feedback String?
+  completed Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+
+model CodingAttempt {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  question String
+  testCases Json
+  code String?
+  language String?
+  score Float?
+  feedback String?
+  completed Boolean @default(false)
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "VideoAttempt" ALTER COLUMN "videoUrl" DROP NOT NULL,
+ALTER COLUMN "audioUrl" DROP NOT NULL,
+ALTER COLUMN "transcript" DROP NOT NULL;
