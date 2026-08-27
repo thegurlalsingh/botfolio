@@ -1,5 +1,4 @@
 // Route handlers for user auth and profile endpoints: login, get profile, save profile, refresh token.
-import User from './User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getCurrentUser, loginUser, saveUserProfile, refreshAccessToken } from './service.js';
