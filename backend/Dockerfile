@@ -1,19 +1,17 @@
-FROM python:3.11-slim
+FROM node:22-bookworm-slim
 
 RUN apt-get update && \
     apt-get install -y \
-        curl \
+        python3 \
+        python3-pip \
+        ffmpeg \
         make \
         g++ \
-        ffmpeg \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir \
+RUN pip3 install --no-cache-dir --break-system-packages \
     pdfplumber \
     ffmpeg-python
 
@@ -22,12 +20,10 @@ COPY package*.json ./
 RUN npm install
 
 COPY prisma ./prisma
-
 RUN npx prisma generate
 
 COPY . .
 
-# Keys directory
 RUN mkdir -p /app/keys
 
 EXPOSE 5050
