@@ -1,3 +1,3 @@
-const BASE_URL = "http://localhost:5050/api";
+const BASE_URL = "https://botfolio-bfpb.onrender.com/api";
 
 export default BASE_URL;
