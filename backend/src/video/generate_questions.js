@@ -137,10 +137,6 @@ General rules:
       throw new Error('LLM returned an excessively long behavioral question');
     }
 
-    if (!question.includes('?')) {
-      throw new Error(`LLM response does not appear to be a question: "${question}"`);
-    }
-
     if ((question.startsWith('{') && question.endsWith('}')) || (question.startsWith('[') && question.endsWith(']'))) {
       throw new Error('LLM returned JSON instead of a behavioral question');
     }
