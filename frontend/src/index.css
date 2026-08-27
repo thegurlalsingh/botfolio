@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+@theme {
+    --color-surface: var(--surface);
+    --color-surface-container: var(--surface-container);
+    --color-surface-container-high: var(--surface-container-high);
+    --color-surface-container-lowest: var(--surface-container-lowest);
+    --color-primary: var(--primary);
+    --color-primary-container: var(--primary-container);
+    --color-on-primary-container: var(--on-primary-container);
+    --color-on-surface: var(--on-surface);
+    --color-on-surface-variant: var(--on-surface-variant);
+    --color-outline: var(--outline);
+    --color-outline-variant: var(--outline-variant);
+
+    --font-display: 'Geist', sans-serif;
+    --font-body: 'Geist', sans-serif;
+    --font-mono: 'Geist', monospace;
+}
+
+@layer base {
+    :root {
+        --surface: #121414;
+        --surface-container: #1f2020;
+        --surface-container-high: #292a2a;
+        --surface-container-lowest: #0d0e0f;
+        --primary: #e9feff;
+        --primary-container: #00f5ff;
+        --on-primary-container: #006c71;
+        --on-surface: #e3e2e2;
+        --on-surface-variant: #b9caca;
+        --outline: #849495;
+        --outline-variant: #3a494a;
+    }
+}
+
+@layer utilities {
+    .glow-on-hover {
+        @apply transition-all duration-300;
+    }
+
+    @media (hover: hover) {
+        .glow-on-hover:hover {
+            text-shadow: 0 0 15px rgba(0, 245, 255, 0.6);
+            letter-spacing: 0.02em;
+        }
+    }
+
+    .nav-capsule {
+        @apply !w-[95%] !max-w-7xl !mx-auto !top-3 !rounded-full;
+        background: rgba(18, 20, 20, 0.85) !important;
+        backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(0, 245, 255, 0.2) !important;
+        box-shadow: 0 10px 30px -10px rgba(0, 245, 255, 0.3) !important;
+        padding-top: 0.75rem !important;
+        padding-bottom: 0.75rem !important;
+    }
+}
+
+/* Material Icons Setup */
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Custom Cursor Setup */
+@media (hover: hover) and (pointer: fine) {
+    * {
+        cursor: none !important;
+    }
+}
+
+/* Typing Effect Cursor */
+.typing-cursor::after {
+    content: '|';
+    color: var(--primary-container);
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+/* CSS Marquee */
+.marquee-content {
+    display: inline-block;
+    white-space: nowrap;
+    animation: marquee 30s linear infinite;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0%);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.ghost-text {
+    color: rgba(185, 202, 202, 0.3);
+    filter: blur(2px);
+    transition: all 0.4s ease;
+}
+
+.marquee-container:hover .ghost-text {
+    color: var(--primary-container);
+    filter: blur(0);
+}
+
+* {
+    cursor: auto !important;
+}
+
+/* Glassmorphism & Neon Obsidan Theme Extras */
+body {
+    background-color: #0b0d13 !important;
+    color: #f3f4f6 !important;
+    font-family: 'Outfit', sans-serif;
+}
+
+.glass-panel {
+    background: rgba(18, 22, 32, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+.glass-panel-hover:hover {
+    border-color: rgba(99, 102, 241, 0.35) !important;
+    box-shadow: 0 15px 45px -10px rgba(99, 102, 241, 0.2) !important;
+    transform: translateY(-2px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neon-glow-cyan {
+    box-shadow: 0 0 25px rgba(0, 245, 255, 0.25) !important;
+}
+
+.neon-glow-indigo {
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.25) !important;
+}
+
+.neon-text-cyan {
+    text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+.neon-text-indigo {
+    text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0b0d13;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

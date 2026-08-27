@@ -1,0 +1,186 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  candidate
+  hr
+}
+
+enum Step {
+  info
+  mcq
+  video
+  coding
+  completed
+}
+
+model ExperienceTimeline {
+  id       String  @id @default(uuid())
+  title    String?
+  company  String?
+  duration String?
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EducationTimeLine {
+  id          String  @id @default(uuid())
+  college     String?
+  degree_name String?
+  from_to     String?
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JobDescription {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String?
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model User {
+  id                  String               @id @default(uuid())
+  name                String
+  email               String               @unique
+  password            String
+  role                Role                 @default(candidate)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+  jobDescriptions     JobDescription[]
+  phone               String?
+  location            String?
+  resumeUrl           String?
+  currentStep         Step?                @default(info)
+  skills              String[]             @default([])
+  designation         String?
+  experienceYear      String?
+  experienceTimeline  ExperienceTimeline[]
+  educationTimeLine   EducationTimeLine[]
+  createdAt           DateTime             @default(now())
+  mcqAttempts         McqAttempt[]
+  mcqScore            Float?
+  videoAttempts       VideoInterview[]
+  videoScore          Float?
+  codingAttempts      CodingAttempt[]
+  codingScore         Float?
+}
+
+model McqQuestion {
+  id            String     @id @default(uuid())
+  attemptId     String
+
+  question     String
+  options      String[]
+  correct      String
+  explanation  String?
+
+  topic        String?
+  difficulty   String?
+  competency   String?
+
+  candidateAnswer String?
+  isCorrect       Boolean?
+
+  createdAt DateTime @default(now())
+
+  attempt McqAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
+}
+
+model McqAttempt {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  questions McqQuestion[]
+
+  score     Float         @default(0)
+  completed Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([userId])
+}
+
+// model VideoAttempt {
+//   id String @id @default(uuid())
+//   userId String
+//   user User @relation(fields: [userId], references: [id])
+//   question String
+//   videoUrl String?
+//   audioUrl String?
+//   transcript String? 
+//   score Float?
+//   feedback String?
+//   completed Boolean @default(false)
+//   createdAt DateTime @default(now())
+// }
+
+model VideoInterview {
+  id          String               @id @default(cuid())
+  userId      String
+  currentStep Int                  @default(1)
+  totalSteps  Int                  @default(5)
+  completed   Boolean              @default(false)
+  finalScore  Float?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  user        User                 @relation(fields: [userId], references: [id])
+  steps       VideoInterviewStep[]
+
+  @@index([userId])
+}
+
+model VideoInterviewStep {
+  id          String         @id @default(cuid())
+  interviewId String
+  stepNumber  Int
+  question    String
+  videoUrl    String?
+  audioUrl    String?
+  transcript  String?
+  score       Float?
+  relevance   Float?
+  clarity     Float?
+  confidence  Float?
+  feedback    String?
+  completed   Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  interview   VideoInterview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewId, stepNumber])
+  @@index([interviewId])
+}
+
+model CodingAttempt {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  question  String
+  testCases Json
+  code      String?
+  language  String?
+  score     Float?
+  feedback  String?
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
