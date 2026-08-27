@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   const isRefreshing = useRef(false);
   const refreshPromise = useRef(null);
 
-  const BACKEND_URL = 'http://botfolio-bfpb.onrender.com';
+  const BACKEND_URL = 'https://botfolio-bfpb.onrender.com';
   axios.defaults.baseURL = `${BACKEND_URL}/api`;
 
   const syncLocalStorageFlags = (step, resumeUrl = null) => {
