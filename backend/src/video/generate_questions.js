@@ -107,7 +107,7 @@ General rules:
 
     console.log(`Generating behavioral question for ${isFirstQuestion ? 'step 1' : `step ${attempt.currentStep + 1}`}`);
 
-    const rawResponse = await askLLM(prompt, { temperature: 0.7, maxTokens: 300 });
+    const rawResponse = await askLLM(prompt, { temperature: 0.7, maxTokens: 8192 });
 
     if (rawResponse === null || rawResponse === undefined) {
       throw new Error('LLM returned an empty response while generating behavioral question');

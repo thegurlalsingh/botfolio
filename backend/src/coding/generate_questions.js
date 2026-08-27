@@ -83,7 +83,7 @@ Return exactly this structure:
       console.log(`Coding problem generation attempt ${attempt}/${MAX_RETRIES}`);
       const parsed = await askJsonLLM(prompt, {
         temperature: 0,
-        maxTokens: 4096,
+        maxTokens: 8192,
       });
 
       if (!parsed || typeof parsed !== 'object') {
