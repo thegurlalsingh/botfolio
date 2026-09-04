@@ -58,78 +58,115 @@ export default function VideoRound() {
   useEffect(() => {
     fetchQuestion();
   }, [fetchQuestion]);
-  
+
   useEffect(() => {
     if (!question) return;
-  
+
     window.speechSynthesis.cancel();
-  
+
     const utterance = new SpeechSynthesisUtterance(question);
-  
+
     utterance.rate = 0.9;
     utterance.pitch = 1;
     utterance.volume = 1;
-  
+
     window.speechSynthesis.speak(utterance);
-  
+
     return () => {
       window.speechSynthesis.cancel();
     };
   }, [question]);
 
-  useEffect(() => {
-    let mounted = true;
+  // Robust media initialization with fallback constraints & cleanup
+  const startMedia = useCallback(async () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
 
-    const startMedia = async () => {
+    setCameraReady(false);
+
+    try {
+      let mediaStream = null;
+
+      // 1. Try preferred constraints
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user' },
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: true,
         });
-
-        if (!mounted) {
-          mediaStream.getTracks().forEach(track => track.stop());
-          return;
+      } catch (err1) {
+        console.warn('Preferred camera constraints failed, trying basic video+audio:', err1);
+        // 2. Fallback to generic video+audio
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+        } catch (err2) {
+          console.warn('Basic video+audio failed, trying video only:', err2);
+          // 3. Fallback to video only
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
         }
-
-        streamRef.current = mediaStream;
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-        }
-
-        setCameraReady(true);
-        console.log('Camera + microphone access granted');
-      } catch (err) {
-        console.error('Media error:', err);
-
-        let message = 'Failed to access camera and microphone.';
-
-        if (err.name === 'NotAllowedError') {
-          message = 'Camera and microphone permission was denied. Please allow access and retry.';
-        } else if (err.name === 'NotFoundError') {
-          message = 'No camera or microphone was detected.';
-        } else if (err.name === 'SecurityError') {
-          message = 'Camera access requires HTTPS or localhost.';
-        }
-
-        setError(message);
-        setCameraReady(false);
       }
-    };
 
+      streamRef.current = mediaStream;
+      setCameraReady(true);
+      setError('');
+      console.log('Camera access granted successfully');
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        videoRef.current.play().catch(e => console.warn('Auto-play blocked:', e));
+      }
+    } catch (err) {
+      console.error('Media error:', err);
+
+      let message = 'Failed to access camera and microphone.';
+
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        message = 'Camera and microphone permission was denied. Please allow camera access in browser settings and retry.';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        message = 'No camera or microphone was detected on your system.';
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        message = 'Camera is currently in use by another application (e.g. Zoom, Teams). Please close other apps and retry.';
+      } else if (err.name === 'SecurityError') {
+        message = 'Camera access requires HTTPS or localhost connection.';
+      }
+
+      setError(message);
+      setCameraReady(false);
+    }
+  }, []);
+
+  // Initialize camera on mount and cleanup on unmount
+  useEffect(() => {
     startMedia();
 
     return () => {
-      mounted = false;
-
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
       }
     };
-  }, []);
+  }, [startMedia]);
 
+  // Synchronize camera stream with video DOM element whenever loading state or camera readiness changes
+  useEffect(() => {
+    if (!loading && cameraReady && streamRef.current && videoRef.current) {
+      if (videoRef.current.srcObject !== streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+      }
+      videoRef.current.play().catch(err => {
+        console.warn('Video auto-play prevented by browser:', err);
+      });
+    }
+  }, [loading, cameraReady]);
+
+  // Countdown timer when recording
   useEffect(() => {
     if (!recording) { return; }
 
@@ -154,8 +191,8 @@ export default function VideoRound() {
   const handleStart = () => {
     clearError();
 
-    if (!streamRef.current) {
-      setError('Camera and microphone are not ready. Please allow access and retry.');
+    if (!streamRef.current || !cameraReady) {
+      setError('Camera is not ready. Please enable camera access and retry.');
       return;
     }
 
@@ -165,22 +202,27 @@ export default function VideoRound() {
       chunksRef.current = [];
       let mimeType = '';
 
-      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
-        mimeType = 'video/webm;codecs=vp9,opus';
-      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
-        mimeType = 'video/webm;codecs=vp8,opus';
-      } else if (MediaRecorder.isTypeSupported('video/webm')) {
-        mimeType = 'video/webm';
+      const candidates = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm',
+        'video/mp4;codecs=avc1,mp4a',
+        'video/mp4',
+      ];
+
+      if (typeof MediaRecorder !== 'undefined') {
+        for (const type of candidates) {
+          if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+            mimeType = type;
+            break;
+          }
+        }
       }
 
-      if (!mimeType) {
-        setError('Your browser does not support video recording.');
-        return;
-      }
+      console.log('Using MediaRecorder MIME type:', mimeType || 'browser default');
 
-      console.log('Using MIME type:', mimeType);
-
-      const recorder = new MediaRecorder(streamRef.current, { mimeType });
+      const recorderOptions = mimeType ? { mimeType } : undefined;
+      const recorder = new MediaRecorder(streamRef.current, recorderOptions);
 
       recorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
@@ -195,10 +237,11 @@ export default function VideoRound() {
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mimeType });
+        const actualType = mimeType || recorder.mimeType || 'video/webm';
+        const blob = new Blob(chunksRef.current, { type: actualType });
         console.log('Created blob:', { type: blob.type, size: blob.size });
         setVideoBlob(blob);
-        uploadVideo(blob);
+        uploadVideo(blob, actualType);
       };
 
       mediaRecorderRef.current = recorder;
@@ -209,7 +252,7 @@ export default function VideoRound() {
       uploadedMediaRef.current = { videoUrl: '', audioUrl: '' };
     } catch (err) {
       console.error('Failed to start recorder:', err);
-      setError('Could not start recording. Please try again.');
+      setError(`Could not start recording: ${err.message || 'Check camera permissions'}`);
     }
   };
 
@@ -225,12 +268,15 @@ export default function VideoRound() {
     setRecording(false);
   };
 
-  const uploadVideo = async (blob) => {
+  const uploadVideo = async (blob, blobType) => {
     setUploading(true);
     setError('');
 
     try {
-      const videoFile = new File([blob], 'interview.webm', { type: 'video/webm' });
+      const type = blobType || blob?.type || 'video/webm';
+      const isMp4 = type.includes('mp4');
+      const filename = isMp4 ? 'interview.mp4' : 'interview.webm';
+      const videoFile = new File([blob], filename, { type });
 
       console.log('FILE BEFORE UPLOAD:', { name: videoFile.name, type: videoFile.type, size: videoFile.size });
 
@@ -251,6 +297,10 @@ export default function VideoRound() {
 
       if (data.completed) {
         setSubmitted(true);
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
         await refreshUser();
         navigate('/profile', { replace: true });
       } else {
@@ -262,68 +312,20 @@ export default function VideoRound() {
       }
     } catch (err) {
       console.error('Video upload failed:', err.response?.data || err);
-      setError(err.response?.data?.message || 'Upload failed');
+      setError(err.response?.data?.message || 'Upload failed. Click Retry to try again.');
     } finally {
       setUploading(false);
     }
   };
 
-  const submitAnswer = async () => {
-    const { videoUrl, audioUrl } = uploadedMediaRef.current;
-
-    if (!videoUrl) {
-      setError('No uploaded video was found. Please record your answer again.');
+  const handleRetry = async () => {
+    if (!cameraReady) {
+      startMedia();
       return;
     }
 
-    setSubmitting(true);
-    setError('');
-
-    try {
-      const response = await axios.post('/video/submit', {
-        attemptId,
-        videoUrl,
-        audioUrl: audioUrl || '',
-      });
-
-      const data = response.data;
-      console.log('Video submission successful:', data);
-
-      if (data.completed) {
-        setSubmitted(true);
-
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
-
-        await refreshUser();
-        navigate('/profile', { replace: true });
-        return;
-      }
-
-      if (!data.nextQuestion) {
-        throw new Error('Server did not return the next interview question.');
-      }
-
-      setQuestion(data.nextQuestion);
-      setCurrentStep(data.currentStep);
-      setTotalSteps(data.totalSteps);
-      setTimeLeft(120);
-      setVideoBlob(null);
-      uploadedMediaRef.current = { videoUrl: '', audioUrl: '' };
-      setError('');
-    } catch (err) {
-      console.error('Video submission failed:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to process your answer. Please retry.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleRetry = async () => {
     if (!videoBlob || videoBlob.size === 0) {
-      setError('No valid recorded video available. Please record again.');
+      fetchQuestion();
       return;
     }
 
@@ -331,37 +333,35 @@ export default function VideoRound() {
       setUploading(true);
       setError('');
 
-      const videoFile = new File([videoBlob], 'interview.webm', { type: 'video/webm' });
+      const type = videoBlob.type || 'video/webm';
+      const isMp4 = type.includes('mp4');
+      const filename = isMp4 ? 'interview.mp4' : 'interview.webm';
+      const videoFile = new File([videoBlob], filename, { type });
 
-      console.log('Retry video:', { name: videoFile.name, type: videoFile.type, size: videoFile.size, blobType: videoBlob.type });
-
-      if (!videoFile.type.startsWith('video/')) {
-        throw new Error('Invalid video MIME type');
-      }
-
-      if (videoFile.size === 0) {
-        throw new Error('Video file is empty');
-      }
+      console.log('Retry video:', { name: videoFile.name, type: videoFile.type, size: videoFile.size });
 
       const formData = new FormData();
-      formData.append('video', videoFile, 'interview.webm');
-      console.log('FormData video:', formData.get('video'));
+      formData.append('video', videoFile, filename);
 
       const uploadRes = await axios.post('/video/upload', formData);
       console.log('Retry upload successful:', uploadRes.data);
 
       const { videoUrl, audioUrl } = uploadRes.data;
 
-      if (!videoUrl || !audioUrl) {
-        throw new Error('Video upload succeeded but video/audio URL is missing');
+      if (!videoUrl) {
+        throw new Error('Video upload succeeded but video URL is missing');
       }
 
-      const submitRes = await axios.post('/video/submit', { attemptId, videoUrl, audioUrl });
+      const submitRes = await axios.post('/video/submit', { attemptId, videoUrl, audioUrl: audioUrl || '' });
       const data = submitRes.data;
       console.log('Retry submission response:', data);
 
       if (data.completed) {
         setSubmitted(true);
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
         await refreshUser();
         navigate('/profile', { replace: true });
         return;
@@ -474,7 +474,7 @@ export default function VideoRound() {
               <div className="flex items-start gap-4">
                 <div className="text-2xl">⚠️</div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-red-400 mb-1">Processing failed</h3>
+                  <h3 className="font-bold text-red-400 mb-1">Notice / Issue</h3>
                   <p className="text-sm text-gray-400">{error}</p>
                 </div>
                 <button
@@ -482,7 +482,7 @@ export default function VideoRound() {
                   disabled={uploading || submitting}
                   className="px-5 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 font-semibold hover:bg-red-500/20 transition disabled:opacity-50"
                 >
-                  Retry
+                  {!cameraReady ? 'Retry Camera' : 'Retry'}
                 </button>
               </div>
             </div>
@@ -510,10 +510,16 @@ export default function VideoRound() {
             <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
 
             {!cameraReady && (
-              <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
-                <div className="text-center">
+              <div className="absolute inset-0 bg-black/85 flex items-center justify-center p-6 text-center">
+                <div className="max-w-md">
                   <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-cyan-400 mx-auto mb-4" />
-                  <p className="text-gray-300">Starting camera...</p>
+                  <p className="text-gray-300 mb-4">{error || 'Starting camera...'}</p>
+                  <button
+                    onClick={startMedia}
+                    className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-semibold text-sm rounded-xl hover:from-cyan-400 hover:to-indigo-500 transition shadow-lg"
+                  >
+                    🔄 Enable / Retry Camera
+                  </button>
                 </div>
               </div>
             )}
